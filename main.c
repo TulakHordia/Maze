@@ -1,70 +1,64 @@
 #include <stdio.h>
+#include <stdlib.h>
 
+#define WALL 0
+#define EMPTY 1
+#define VISITED 2
+#define DRAGON 3
+#define N 4
 #define IMPOSSIBLE (N*N+1)
 
-enum {WALL,EMPTY,VISITED,DRAGON,N};
-
-int number_of_dragons=0,currentMostDragons=0;
-
-int printMaze(int maze[N][N])
+int solveMaze(int maze[N][N], int i, int j, int dragonsCounter)
 {
-    for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < N; ++j) {
-            printf("%d ",maze[i][j]);
-        }
-        printf("\n");
-    }
-}
+    int up,down,left,right,currentHighestAmount = IMPOSSIBLE;
 
-int solveMaze(int maze[N][N], int i, int j, int sol[N][N])
-{
-    if (maze[i][j] == WALL){ return 0; }
+    if ((maze[i][j] == WALL) || (maze[i][j] == VISITED)){ return 0; }
     if (maze[i][j] == VISITED) { return 0; }
-    if (maze[i][j] == DRAGON) {
-        number_of_dragons++;
-        if (currentMostDragons != 0 && number_of_dragons > currentMostDragons) {
-            maze[i][j] = VISITED;
-            return 0;
+    if (maze[i][j] == DRAGON) { dragonsCounter++; }
+    if (i==N-1 && j==N-1) { return dragonsCounter; }
+    maze[i][j] = VISITED; // Mark curren t spot with (2).
+
+   if (i>0) {
+       up = solveMaze(maze,i-1,j,dragonsCounter);
+       if (up != 0 && up < currentHighestAmount) {
+           currentHighestAmount = up;
+       }
+   }
+    if (i<N-1) {
+        down = solveMaze(maze,i+1,j,dragonsCounter);
+        if (down != 0 && down < currentHighestAmount) {
+            currentHighestAmount = down;
         }
-        sol[i][j] = DRAGON;
     }
-    maze[i][j] = VISITED; // Mark current spot with (2).
-    if (i==N-1 && j==N-1) {
-        if (currentMostDragons != 0 && currentMostDragons >= number_of_dragons) {
-            return 1;
-        } else {
-            currentMostDragons = number_of_dragons;
-            number_of_dragons = 0;
+    if (j>0) {
+        left = solveMaze(maze,i,j-1,dragonsCounter);
+        if (left != 0 && left < currentHighestAmount) {
+            currentHighestAmount = left;
         }
-    } //reached the end (N-1,N-1) - (3,3) incase N is 4.
-    if (   ((i < N-1) && solveMaze(maze,i+1,j,sol))
-    || ((i > 0) && solveMaze(maze,i-1,j,sol))
-    || ((j < N-1) && solveMaze(maze,i,j+1,sol))
-    || ((j > 0) && solveMaze(maze,i,j-1,sol)) ) { // checking index-out-bounds + recursively going around the maze
-        return 1;
     }
-    maze[i][j] = EMPTY;
-    return 0;
+    if (j<N-1) {
+        right = solveMaze(maze,i,j+1,dragonsCounter);
+        if (right != 0 && right < currentHighestAmount) {
+            currentHighestAmount = right;
+        }
+    }
+
+    if ( (currentHighestAmount == IMPOSSIBLE) && (i != 0) && (j != 0)) {
+        return 0;
+    }
+
+    return currentHighestAmount;
 }
 
 int main() {
-    int maze[N][N] = { {1,1,3,3},
+    int res,maze[N][N] = { {1,1,3,3},
                        {3,0,1,1},
                        {3,0,0,1},
                        {1,3,3,1} };
-    int sol[N][N] = { { 0, 0, 0, 0 },
-                      { 0, 0, 0, 0 },
-                      { 0, 0, 0, 0 },
-                      { 0, 0, 0, 0 } };
 
-    int solved = solveMaze(maze, 0, 0, sol);
-    if (solved)
-    {
-        printMaze(maze);
-        printf("Amount of dragons passed through in the maze: %d\n",number_of_dragons);
-    }
-    else
-    {
-        printf("No solution, %d\n",IMPOSSIBLE);
-    }
+    res = solveMaze(maze, 0, 0,0);
+
+    printf("Amount of dragons passed through in the maze: %d\n",res);
+
+
 }
